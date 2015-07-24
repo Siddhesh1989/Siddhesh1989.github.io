@@ -68,7 +68,7 @@ img {
 </div>
 
 
-<p>Insert intro here</p>
+<p>The objective of this project is to fit a model to the given data set that can then be used to predict the classe variable i.e. determine if a person performed an exercise correctly or not.</p>
 <pre class="r"><code>library(caret)</code></pre>
 <pre><code>## Loading required package: lattice
 ## Loading required package: ggplot2</code></pre>
@@ -81,7 +81,7 @@ naColumnsTesting&lt;-colSums(is.na(pmlTestingData))==0
 #only including the columns that have no NA values
 nonNATrainingData&lt;-pmlTrainingData[,naColumnsTraining]
 nonNATestingData&lt;-pmlTestingData[,naColumnsTesting]
-#excluding the columns that have near zero variability
+#excluding the columns that have near zero variability (column 160 is the classe variable, so I am not running nearZeroVar on that)
 nzv &lt;- nearZeroVar(nonNATrainingData[,-160])
 filteredPMLtraining &lt;- nonNATrainingData[, -nzv]
 #exclusing columns such as serial no., timestamps etc that have no effect on the outcome of the exercise performed
@@ -100,6 +100,7 @@ p = 0.2, list = FALSE)
 trainset1 &lt;- filteredPMLtraining[trainIndex20,] #has 20% of the whole set
 tempset1 &lt;- filteredPMLtraining[-trainIndex20,] #has the remaining 80% of data
 #now training the data set to predict the classe using random forests, which is a model building algorithm well suited for classification problems
+#I am using k fold cross validation with k=3 
 model1 &lt;- train(classe~.,data=trainset1,method=&quot;rf&quot;, trControl = trainControl(method=&quot;cv&quot;,number =3,allowParallel = TRUE))</code></pre>
 <pre><code>## Loading required package: randomForest
 ## randomForest 4.6-10
@@ -119,9 +120,9 @@ model1 &lt;- train(classe~.,data=trainset1,method=&quot;rf&quot;, trControl = tr
 ## Resampling results across tuning parameters:
 ## 
 ##   mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
-##    2    0.9628281  0.9529452  0.009167414  0.011625229
-##   30    0.9793782  0.9738976  0.006980311  0.008838326
-##   58    0.9768315  0.9706742  0.010133047  0.012830805
+##    2    0.9646108  0.9552087  0.007675429  0.009725094
+##   30    0.9796313  0.9742168  0.005769238  0.007305197
+##   58    0.9773412  0.9713190  0.010359573  0.013118728
 ## 
 ## Accuracy was used to select the optimal model using  the largest value.
 ## The final value used for the model was mtry = 30.</code></pre>
@@ -133,14 +134,14 @@ model1 &lt;- train(classe~.,data=trainset1,method=&quot;rf&quot;, trControl = tr
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 30
 ## 
-##         OOB estimate of  error rate: 1.25%
+##         OOB estimate of  error rate: 1.27%
 ## Confusion matrix:
 ##      A   B   C   D   E class.error
-## A 1116   0   0   0   0  0.00000000
-## B   11 743   6   0   0  0.02236842
-## C    0  11 674   0   0  0.01605839
-## D    0   0  11 633   0  0.01708075
-## E    0   3   0   7 712  0.01385042</code></pre>
+## A 1116   0   0   0   0 0.000000000
+## B   12 738   9   0   1 0.028947368
+## C    0   9 676   0   0 0.013138686
+## D    0   0  12 632   0 0.018633540
+## E    0   1   1   5 715 0.009695291</code></pre>
 <pre class="r"><code>#listing the predictors in order of importance in predicting classe
 varImp(model1)</code></pre>
 <pre><code>## rf variable importance
@@ -149,25 +150,25 @@ varImp(model1)</code></pre>
 ## 
 ##                      Overall
 ## num_window           100.000
-## roll_belt             75.640
-## pitch_forearm         44.949
-## yaw_belt              37.411
-## magnet_dumbbell_z     34.930
-## pitch_belt            31.799
-## magnet_dumbbell_y     26.057
-## roll_forearm          19.529
-## roll_dumbbell         16.881
-## magnet_dumbbell_x     16.476
-## accel_dumbbell_y      14.031
-## accel_forearm_x       12.431
-## accel_belt_z          11.242
-## magnet_belt_z         10.229
-## accel_dumbbell_z       9.869
-## magnet_belt_y          9.592
-## magnet_arm_x           9.202
-## total_accel_dumbbell   8.844
-## magnet_belt_x          8.827
-## magnet_forearm_z       7.735</code></pre>
+## roll_belt             72.741
+## pitch_forearm         43.702
+## yaw_belt              35.515
+## magnet_dumbbell_z     34.128
+## pitch_belt            31.021
+## magnet_dumbbell_y     25.801
+## roll_forearm          18.339
+## roll_dumbbell         15.670
+## magnet_dumbbell_x     15.523
+## accel_dumbbell_y      14.080
+## accel_forearm_x       12.159
+## accel_belt_z          11.155
+## magnet_belt_z         10.009
+## accel_dumbbell_z       9.569
+## magnet_belt_y          9.544
+## magnet_belt_x          8.502
+## total_accel_dumbbell   8.426
+## magnet_arm_x           8.325
+## accel_forearm_z        7.122</code></pre>
 <pre class="r"><code>#selecting only the variables with importance &gt;=10 to reduce number of predictors used in the main model generation and prevent overfitting
 importance &lt;- varImp(model1)$importance
 importance$vars &lt;- rownames(importance)
@@ -201,14 +202,14 @@ model2</code></pre>
 ## No pre-processing
 ## Resampling: Cross-Validated (3 fold) 
 ## 
-## Summary of sample sizes: 6541, 6541, 6542 
+## Summary of sample sizes: 6542, 6540, 6542 
 ## 
 ## Resampling results across tuning parameters:
 ## 
 ##   mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
-##    2    0.9904196  0.9878808  0.002316991  0.002932198
-##    8    0.9926618  0.9907173  0.001910826  0.002418605
-##   14    0.9897062  0.9869780  0.002547855  0.003224459
+##    2    0.9904196  0.9878815  0.001870654  0.002365846
+##    8    0.9920502  0.9899457  0.001704695  0.002155703
+##   14    0.9878713  0.9846602  0.003546906  0.004485605
 ## 
 ## Accuracy was used to select the optimal model using  the largest value.
 ## The final value used for the model was mtry = 8.</code></pre>
@@ -223,52 +224,50 @@ model2</code></pre>
 ##         OOB estimate of  error rate: 0.38%
 ## Confusion matrix:
 ##      A    B    C    D    E  class.error
-## A 2788    1    0    1    0 0.0007168459
-## B    6 1889    3    1    0 0.0052659294
-## C    0    6 1703    2    0 0.0046756283
-## D    0    1    5 1601    1 0.0043532338
-## E    0    4    1    5 1794 0.0055432373</code></pre>
-<pre class="r"><code>#This shows that the expected out of sample error for the model is 0.38%
+## A 2789    1    0    0    0 0.0003584229
+## B    6 1886    6    1    0 0.0068457083
+## C    0    4 1704    3    0 0.0040911748
+## D    0    0    6 1600    2 0.0049751244
+## E    0    0    0    8 1796 0.0044345898</code></pre>
+<pre class="r"><code>#The above result shows that the expected out of sample error for the model is 0.38%
 validate &lt;- predict(model2,validset)
 confusionMatrix(validate,validset$classe)</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 1673    3    0    0    0
-##          B    0 1131    1    0    1
-##          C    0    4 1024    3    1
-##          D    0    0    1  960    4
-##          E    1    0    0    1 1075
+##          A 1674    2    0    0    0
+##          B    0 1130    5    1    3
+##          C    0    5 1020    3    0
+##          D    0    1    1  960    0
+##          E    0    0    0    0 1078
 ## 
 ## Overall Statistics
 ##                                           
-##                Accuracy : 0.9966          
-##                  95% CI : (0.9948, 0.9979)
+##                Accuracy : 0.9964          
+##                  95% CI : (0.9945, 0.9978)
 ##     No Information Rate : 0.2845          
 ##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
 ##                                           
-##                   Kappa : 0.9957          
+##                   Kappa : 0.9955          
 ##  Mcnemar's Test P-Value : NA              
 ## 
 ## Statistics by Class:
 ## 
 ##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity            0.9994   0.9938   0.9981   0.9959   0.9944
-## Specificity            0.9993   0.9996   0.9984   0.9990   0.9996
-## Pos Pred Value         0.9982   0.9982   0.9922   0.9948   0.9981
-## Neg Pred Value         0.9998   0.9985   0.9996   0.9992   0.9988
+## Sensitivity            1.0000   0.9930   0.9942   0.9959   0.9972
+## Specificity            0.9995   0.9981   0.9984   0.9996   1.0000
+## Pos Pred Value         0.9988   0.9921   0.9922   0.9979   1.0000
+## Neg Pred Value         1.0000   0.9983   0.9988   0.9992   0.9994
 ## Prevalence             0.2845   0.1934   0.1744   0.1639   0.1837
-## Detection Rate         0.2844   0.1922   0.1741   0.1632   0.1827
-## Detection Prevalence   0.2849   0.1926   0.1754   0.1640   0.1831
-## Balanced Accuracy      0.9993   0.9967   0.9982   0.9974   0.9970</code></pre>
+## Detection Rate         0.2845   0.1921   0.1734   0.1632   0.1832
+## Detection Prevalence   0.2849   0.1936   0.1747   0.1635   0.1832
+## Balanced Accuracy      0.9998   0.9955   0.9963   0.9977   0.9986</code></pre>
 <pre class="r"><code>#Checking the model output on the test data
 answer &lt;- predict(model2,nonNATestingData)
 answer</code></pre>
 <pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
 ## Levels: A B C D E</code></pre>
-<p>You can also embed plots, for example:</p>
-<p>Note that the <code>echo = FALSE</code> parameter was added to the code chunk to prevent printing of the R code that generated the plot.</p>
 
 
 </div>
